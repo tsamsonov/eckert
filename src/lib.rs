@@ -22,7 +22,7 @@ pub fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
 
     let diagram = VoronoiBuilder::default()
         .set_sites(sites)
-        .set_bounding_box(BoundingBox::new(VoronoiPoint { x: 15., y: 15. }, 10., 10.))
+        .set_bounding_box(BoundingBox::new(VoronoiPoint { x: 50., y: 50. }, 100., 100.))
         .set_lloyd_relaxation_iterations(5)
         .build()
         .unwrap();
@@ -66,8 +66,6 @@ pub fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
     for el in &areas {
         println!("{} {} {}", el.0, el.1, free[el.0]);
     }
-
-
 
     return cells;
 }
