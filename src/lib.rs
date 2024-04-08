@@ -15,8 +15,6 @@ fn cmp_f64(a: &f64, b: &f64) -> Ordering {
 
 pub fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
 
-    // println!("{}", points.len());
-
     let mut sites: Vec<VoronoiPoint> = points
         .iter()
         .map(|&p| VoronoiPoint { x: p.x(), y: p.y() })
@@ -26,11 +24,18 @@ pub fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
 
     let mut kept_all: Vec<usize> = (0..points.len()).step_by(1).collect();
     let mut excluded_all: Vec<usize> = vec![];
+    let mut ratio_all: Vec<f64> = vec![];
+
+    let width = 100_f64;
+    let height = 100_f64;
+    let area = width * height;
+
+    let mut num = points.len();
 
     loop {
         let diagram = VoronoiBuilder::default()
             .set_sites(sites.clone())
-            .set_bounding_box(BoundingBox::new(VoronoiPoint { x: 50., y: 50. }, 100., 100.))
+            .set_bounding_box(BoundingBox::new(VoronoiPoint { x: 50., y: 50. }, width, height))
             .build()
             .unwrap();
 
@@ -71,6 +76,8 @@ pub fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
                 }
                 excluded.push(*i);
                 excluded_all.push(kept_all[*i]);
+                ratio_all.push(area / num as f64);
+                num -= 1;
             }
         }
 
@@ -86,6 +93,8 @@ pub fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
             }
             for (i, _) in areas.iter() {
                 excluded_all.push(kept_all[*i]);
+                ratio_all.push(area / num as f64);
+                num -= 1;
             }
             break;
         } else {
@@ -97,6 +106,10 @@ pub fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
 
     for excl in excluded_all {
         print!("{} ", excl);
+    }
+
+    for ratio in ratio_all {
+        print!("{} ", ratio);
     }
 
     return cells;
