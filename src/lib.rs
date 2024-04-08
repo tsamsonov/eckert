@@ -14,7 +14,6 @@ fn cmp_f64(a: &f64, b: &f64) -> Ordering {
 }
 
 pub fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
-    // let orders = vec![0.; points.len()];
 
     let sites = points
         .iter()
@@ -53,8 +52,19 @@ pub fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
 
     areas.sort_by(|a, b| cmp_f64(&a.1, &b.1));
 
+    let mut free = vec![true; points.len()];
+
+    for (i, _) in &areas {
+        if free[*i] {
+            free[*i] = false;
+            for nb in diagram.cell(*i).iter_neighbors() {
+                free[nb] = false;
+            }
+        }
+    }
+
     for el in &areas {
-        println!("{} {}", el.0, el.1);
+        println!("{} {} {}", el.0, el.1, free[el.0]);
     }
 
 
