@@ -13,7 +13,7 @@ fn cmp_f64(a: &f64, b: &f64) -> Ordering {
     return Ordering::Equal;
 }
 
-pub fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
+pub fn voronoy_tree(points: &Vec<Point>) -> (Vec<usize>, Vec<Polygon>) {
 
     let mut sites: Vec<VoronoiPoint> = points
         .iter()
@@ -31,6 +31,27 @@ pub fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
     let area = width * height;
 
     let mut num = points.len();
+
+    let cells_all = VoronoiBuilder::default()
+        .set_sites(sites.clone())
+        .set_bounding_box(BoundingBox::new(VoronoiPoint { x: 50., y: 50. }, width, height))
+        .build()
+        .unwrap()
+        .iter_cells()
+        .map(|cell|
+            Polygon::new(
+                LineString::new(
+                    cell
+                        .iter_vertices()
+                        .collect::<Vec<&VoronoiPoint>>()
+                        .iter()
+                        .map(|&vp| Coord {x: vp.x, y: vp.y})
+                        .collect()
+                ),
+                vec![]
+            )
+        )
+        .collect();
 
     loop {
         let diagram = VoronoiBuilder::default()
@@ -104,14 +125,6 @@ pub fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
         }
     }
 
-    for excl in excluded_all {
-        print!("{} ", excl);
-    }
-
-    for ratio in ratio_all {
-        print!("{} ", ratio);
-    }
-
-    return cells;
+    return (excluded_all, cells_all);
 }
 
