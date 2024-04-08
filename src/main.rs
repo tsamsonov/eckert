@@ -8,7 +8,7 @@ use wkt::ToWkt;
 use rand::{distributions::Uniform, Rng};
 
 fn main() {
-    let n = 20;
+    let n = 15;
     let range = Uniform::from(0.0..100.0);
     let xvalues: Vec<f64> = rand::thread_rng().sample_iter(&range).take(n).collect();
     let yvalues: Vec<f64> = rand::thread_rng().sample_iter(&range).take(n).collect();

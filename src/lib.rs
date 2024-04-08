@@ -15,14 +15,17 @@ fn cmp_f64(a: &f64, b: &f64) -> Ordering {
 
 pub fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
 
+    // println!("{}", points.len());
+
     let mut sites: Vec<VoronoiPoint> = points
         .iter()
         .map(|&p| VoronoiPoint { x: p.x(), y: p.y() })
         .collect();
 
-    println!("{}", sites.len());
+    let mut cells: Vec<Polygon>;
 
-    let mut cells: Vec<Polygon> = vec![];
+    let mut kept_all: Vec<usize> = (0..points.len()).step_by(1).collect();
+    let mut excluded_all: Vec<usize> = vec![];
 
     loop {
         let diagram = VoronoiBuilder::default()
@@ -67,6 +70,7 @@ pub fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
                     free[nb] = false;
                 }
                 excluded.push(*i);
+                excluded_all.push(kept_all[*i]);
             }
         }
 
@@ -76,11 +80,23 @@ pub fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
             sites.remove(excluded[i] - i);
         }
 
-        println!("{}", sites.len());
-
         if sites.len() < 3 {
+            for ex in excluded.iter() {
+                areas.retain(|(i, _) | i != ex)
+            }
+            for (i, _) in areas.iter() {
+                excluded_all.push(kept_all[*i]);
+            }
             break;
+        } else {
+            for i in 0..excluded.len() {
+                kept_all.remove(excluded[i] - i);
+            }
         }
+    }
+
+    for excl in excluded_all {
+        print!("{} ", excl);
     }
 
     return cells;
