@@ -15,12 +15,19 @@ fn main() {
 
     let mut pts: Vec<Point> = vec![];
     for (x, y) in xvalues.iter().zip(yvalues.iter()) {
-        pts.push( Point::new(*x, *y));
+        pts.push(Point::new(*x, *y));
     }
 
     let tree = eckert::voronoy_tree(&pts);
     for poly in tree {
         let wkt = poly.wkt_string();
-        println!("{}", wkt)
+        println!("SELECT ST_geomfromtext('{}')", wkt);
+        println!("UNION ALL");
+    }
+
+    for p in pts {
+        let wkt = p.wkt_string();
+        println!("SELECT ST_geomfromtext('{}')", wkt);
+        println!("UNION ALL");
     }
 }

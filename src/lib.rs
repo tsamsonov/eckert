@@ -15,56 +15,72 @@ fn cmp_f64(a: &f64, b: &f64) -> Ordering {
 
 pub fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
 
-    let sites = points
+    let mut sites: Vec<VoronoiPoint> = points
         .iter()
         .map(|&p| VoronoiPoint { x: p.x(), y: p.y() })
         .collect();
 
-    let diagram = VoronoiBuilder::default()
-        .set_sites(sites)
-        .set_bounding_box(BoundingBox::new(VoronoiPoint { x: 50., y: 50. }, 100., 100.))
-        .set_lloyd_relaxation_iterations(5)
-        .build()
-        .unwrap();
+    println!("{}", sites.len());
 
-    let cells: Vec<Polygon> = diagram
-        .iter_cells()
-        .map(|cell|
-             Polygon::new(
-                 LineString::new(
-                    cell
-                        .iter_vertices()
-                        .collect::<Vec<&VoronoiPoint>>()
+    let mut cells: Vec<Polygon> = vec![];
+
+    loop {
+        let diagram = VoronoiBuilder::default()
+            .set_sites(sites.clone())
+            .set_bounding_box(BoundingBox::new(VoronoiPoint { x: 50., y: 50. }, 100., 100.))
+            .build()
+            .unwrap();
+
+        cells = diagram
+            .iter_cells()
+            .map(|cell|
+                Polygon::new(
+                    LineString::new(
+                        cell
+                            .iter_vertices()
+                            .collect::<Vec<&VoronoiPoint>>()
                             .iter()
                             .map(|&vp| Coord {x: vp.x, y: vp.y})
                             .collect()
-                 ),
-                 vec![]
-             )
-        )
-        .collect();
+                    ),
+                    vec![]
+                )
+            )
+            .collect();
 
-    let mut areas : Vec<(usize, f64)>  = cells
-        .iter()
-        .enumerate()
-        .map(|(i, elem)| (i, elem.unsigned_area()))
-        .collect();
+        let mut areas : Vec<(usize, f64)>  = cells
+            .iter()
+            .enumerate()
+            .map(|(i, elem)| (i, elem.unsigned_area()))
+            .collect();
 
-    areas.sort_by(|a, b| cmp_f64(&a.1, &b.1));
+        areas.sort_by(|a, b| cmp_f64(&a.1, &b.1));
 
-    let mut free = vec![true; points.len()];
+        let mut free = vec![true; sites.len()];
 
-    for (i, _) in &areas {
-        if free[*i] {
-            free[*i] = false;
-            for nb in diagram.cell(*i).iter_neighbors() {
-                free[nb] = false;
+        let mut excluded: Vec<usize> = vec![];
+
+        for (i, _) in &areas {
+            if free[*i] {
+                free[*i] = false;
+                for nb in diagram.cell(*i).iter_neighbors() {
+                    free[nb] = false;
+                }
+                excluded.push(*i);
             }
         }
-    }
 
-    for el in &areas {
-        println!("{} {} {}", el.0, el.1, free[el.0]);
+        excluded.sort();
+
+        for i in 0..excluded.len() {
+            sites.remove(excluded[i] - i);
+        }
+
+        println!("{}", sites.len());
+
+        if sites.len() < 3 {
+            break;
+        }
     }
 
     return cells;
