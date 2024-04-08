@@ -7,3 +7,4 @@ version = "0.1.0"
 [dependencies]
 geo = "0.28.0"
 voronoice = "0.2.0"
+wkt = "0.10.3"

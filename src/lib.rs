@@ -1,9 +1,19 @@
 extern crate geo;
 extern crate voronoice;
-use geo::{Coord, Point, LineString, Polygon};
-use voronoice::{Point as VoronoiPoint, VoronoiBuilder};
+use geo::{Coord, Point, LineString, Polygon, Area};
+use voronoice::{Point as VoronoiPoint, VoronoiBuilder, BoundingBox};
+use std::cmp::Ordering;
 
-fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
+fn cmp_f64(a: &f64, b: &f64) -> Ordering {
+    if a < b {
+        return Ordering::Less;
+    } else if a > b {
+        return Ordering::Greater;
+    }
+    return Ordering::Equal;
+}
+
+pub fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
     // let orders = vec![0.; points.len()];
 
     let sites = points
@@ -13,11 +23,12 @@ fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
 
     let diagram = VoronoiBuilder::default()
         .set_sites(sites)
+        .set_bounding_box(BoundingBox::new(VoronoiPoint { x: 15., y: 15. }, 10., 10.))
         .set_lloyd_relaxation_iterations(5)
         .build()
         .unwrap();
 
-    let cells = diagram
+    let cells: Vec<Polygon> = diagram
         .iter_cells()
         .map(|cell|
              Polygon::new(
@@ -33,6 +44,19 @@ fn voronoy_tree(points: &Vec<Point>) -> Vec<Polygon> {
              )
         )
         .collect();
+
+    let mut areas : Vec<(usize, f64)>  = cells
+        .iter()
+        .enumerate()
+        .map(|(i, elem)| (i, elem.unsigned_area()))
+        .collect();
+
+    areas.sort_by(|a, b| cmp_f64(&a.1, &b.1));
+
+    for el in &areas {
+        println!("{} {}", el.0, el.1);
+    }
+
 
 
     return cells;
