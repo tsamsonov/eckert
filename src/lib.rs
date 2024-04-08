@@ -13,7 +13,7 @@ fn cmp_f64(a: &f64, b: &f64) -> Ordering {
     return Ordering::Equal;
 }
 
-pub fn voronoy_tree(points: &Vec<Point>) -> (Vec<usize>, Vec<Polygon>) {
+pub fn voronoy_tree(points: &Vec<Point>) -> (Vec<usize>, Vec<Vec<Polygon>>) {
 
     let mut sites: Vec<VoronoiPoint> = points
         .iter()
@@ -21,37 +21,14 @@ pub fn voronoy_tree(points: &Vec<Point>) -> (Vec<usize>, Vec<Polygon>) {
         .collect();
 
     let mut cells: Vec<Polygon>;
-
     let mut kept_all: Vec<usize> = (0..points.len()).step_by(1).collect();
-    let mut excluded_all: Vec<usize> = vec![];
-    let mut ratio_all: Vec<f64> = vec![];
+    let mut orders: Vec<usize> = vec![0; points.len()];
 
     let width = 100_f64;
     let height = 100_f64;
-    let area = width * height;
+    let mut k = 0_usize;
 
-    let mut num = points.len();
-
-    let cells_all = VoronoiBuilder::default()
-        .set_sites(sites.clone())
-        .set_bounding_box(BoundingBox::new(VoronoiPoint { x: 50., y: 50. }, width, height))
-        .build()
-        .unwrap()
-        .iter_cells()
-        .map(|cell|
-            Polygon::new(
-                LineString::new(
-                    cell
-                        .iter_vertices()
-                        .collect::<Vec<&VoronoiPoint>>()
-                        .iter()
-                        .map(|&vp| Coord {x: vp.x, y: vp.y})
-                        .collect()
-                ),
-                vec![]
-            )
-        )
-        .collect();
+    let mut cells_all: Vec<Vec<Polygon>> = vec![];
 
     loop {
         let diagram = VoronoiBuilder::default()
@@ -82,8 +59,9 @@ pub fn voronoy_tree(points: &Vec<Point>) -> (Vec<usize>, Vec<Polygon>) {
             .enumerate()
             .map(|(i, elem)| (i, elem.unsigned_area()))
             .collect();
-
         areas.sort_by(|a, b| cmp_f64(&a.1, &b.1));
+
+        cells_all.push(cells);
 
         let mut free = vec![true; sites.len()];
 
@@ -96,9 +74,8 @@ pub fn voronoy_tree(points: &Vec<Point>) -> (Vec<usize>, Vec<Polygon>) {
                     free[nb] = false;
                 }
                 excluded.push(*i);
-                excluded_all.push(kept_all[*i]);
-                ratio_all.push(area / num as f64);
-                num -= 1;
+                orders[kept_all[*i]] = k;
+                k+=1;
             }
         }
 
@@ -113,9 +90,8 @@ pub fn voronoy_tree(points: &Vec<Point>) -> (Vec<usize>, Vec<Polygon>) {
                 areas.retain(|(i, _) | i != ex)
             }
             for (i, _) in areas.iter() {
-                excluded_all.push(kept_all[*i]);
-                ratio_all.push(area / num as f64);
-                num -= 1;
+                orders[kept_all[*i]] = k;
+                k+=1;
             }
             break;
         } else {
@@ -123,8 +99,9 @@ pub fn voronoy_tree(points: &Vec<Point>) -> (Vec<usize>, Vec<Polygon>) {
                 kept_all.remove(excluded[i] - i);
             }
         }
+
     }
 
-    return (excluded_all, cells_all);
+    return (orders, cells_all);
 }
 

@@ -19,33 +19,32 @@ fn main() {
     }
 
     let (orders, cells) = eckert::voronoy_tree(&pts);
-    // for poly in tree {
-    //     let wkt = poly.wkt_string();
-    //     println!("SELECT ST_geomfromtext('{}')", wkt);
-    //     println!("UNION ALL");
-    // }
-
+    let n_1 = pts.len()-1;
     println!("DROP TABLE IF EXISTS pts;");
-    println!("CREATE TABLE public.pts(fid serial primary key, geom geometry);");
-    println!("INSERT INTO pts (geom) VALUES");
-    for i in 0..pts.len()-1 {
+    println!("CREATE TABLE public.pts(fid serial primary key, ord int, geom geometry);");
+    println!("INSERT INTO pts (ord, geom) VALUES");
+    for i in 0..n_1 {
         let wkt = pts[i].wkt_string();
-        println!("('{}'::geometry),", wkt);
-    }
-
-    let wkt = pts[pts.len()-1].wkt_string();
-    println!("('{}'::geometry);", wkt);
-
-    println!("DROP TABLE IF EXISTS voronoy;");
-    println!("CREATE TABLE public.voronoy(fid serial primary key, ord int, geom geometry);");
-    println!("INSERT INTO voronoy (ord, geom) VALUES");
-    for i in 0..pts.len()-1 {
-        let wkt = cells[i].wkt_string();
         let order = orders[i];
         println!("({}, '{}'::geometry),", order, wkt);
     }
 
-    let wkt = cells[pts.len()-1].wkt_string();
-    let order = orders[pts.len()-1];
+    let wkt = pts[n_1].wkt_string();
+    let order = orders[n_1];
     println!("({}, '{}'::geometry);", order, wkt);
+
+    println!("DROP TABLE IF EXISTS voronoy;");
+    println!("CREATE TABLE public.voronoy(fid serial primary key, iter int, geom geometry);");
+
+    for i in 0..cells.len() {
+        println!("INSERT INTO voronoy (iter, geom) VALUES");
+        let n_1 = cells[i].len()-1;
+        for j in 0..n_1 {
+            let wkt = cells[i][j].wkt_string();
+            println!("({}, '{}'::geometry),", i, wkt);
+        }
+        let wkt = cells[i][n_1].wkt_string();
+        println!("({}, '{}'::geometry);", i, wkt);
+    }
+
 }
