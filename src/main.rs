@@ -18,33 +18,24 @@ fn main() {
         pts.push(Point::new(*x, *y));
     }
 
-    let (orders, cells) = eckert::voronoy_tree(&pts);
+    let (orders, lods) = eckert::voronoy_tree(&pts);
     let n_1 = pts.len()-1;
     println!("DROP TABLE IF EXISTS pts;");
-    println!("CREATE TABLE public.pts(fid serial primary key, ord int, geom geometry);");
-    println!("INSERT INTO pts (ord, geom) VALUES");
+    println!("CREATE TABLE public.pts(fid serial primary key, lod int, ord int, geom geometry);");
+    println!("INSERT INTO pts (lod, ord, geom) VALUES");
     for i in 0..n_1 {
         let wkt = pts[i].wkt_string();
+        let lod = lods[i];
         let order = orders[i];
-        println!("({}, '{}'::geometry),", order, wkt);
+        println!("({}, {}, '{}'::geometry),", lod, order, wkt);
     }
 
     let wkt = pts[n_1].wkt_string();
+    let lod = lods[n_1];
     let order = orders[n_1];
-    println!("({}, '{}'::geometry);", order, wkt);
+    println!("({}, {}, '{}'::geometry);", lod, order, wkt);
 
-    println!("DROP TABLE IF EXISTS voronoy;");
-    println!("CREATE TABLE public.voronoy(fid serial primary key, iter int, geom geometry);");
-
-    for i in 0..cells.len() {
-        println!("INSERT INTO voronoy (iter, geom) VALUES");
-        let n_1 = cells[i].len()-1;
-        for j in 0..n_1 {
-            let wkt = cells[i][j].wkt_string();
-            println!("({}, '{}'::geometry),", i, wkt);
-        }
-        let wkt = cells[i][n_1].wkt_string();
-        println!("({}, '{}'::geometry);", i, wkt);
-    }
+    // SELECT st_collect(st_voronoipolygons(st_collect(geom)), st_collect(geom)) FROM public.pts
+    // WHERE lod >= 10
 
 }

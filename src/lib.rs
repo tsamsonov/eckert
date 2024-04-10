@@ -13,7 +13,7 @@ fn cmp_f64(a: &f64, b: &f64) -> Ordering {
     return Ordering::Equal;
 }
 
-pub fn voronoy_tree(points: &Vec<Point>) -> (Vec<usize>, Vec<Vec<Polygon>>) {
+pub fn voronoy_tree(points: &Vec<Point>) -> (Vec<usize>, Vec<usize>) {
 
     let mut sites: Vec<VoronoiPoint> = points
         .iter()
@@ -23,12 +23,12 @@ pub fn voronoy_tree(points: &Vec<Point>) -> (Vec<usize>, Vec<Vec<Polygon>>) {
     let mut cells: Vec<Polygon>;
     let mut kept_all: Vec<usize> = (0..points.len()).step_by(1).collect();
     let mut orders: Vec<usize> = vec![0; points.len()];
+    let mut lods: Vec<usize> = vec![0; points.len()];
+    let mut lod = 0_usize;
 
     let width = 100_f64;
     let height = 100_f64;
     let mut k = 0_usize;
-
-    let mut cells_all: Vec<Vec<Polygon>> = vec![];
 
     loop {
         let diagram = VoronoiBuilder::default()
@@ -61,8 +61,6 @@ pub fn voronoy_tree(points: &Vec<Point>) -> (Vec<usize>, Vec<Vec<Polygon>>) {
             .collect();
         areas.sort_by(|a, b| cmp_f64(&a.1, &b.1));
 
-        cells_all.push(cells);
-
         let mut free = vec![true; sites.len()];
 
         let mut excluded: Vec<usize> = vec![];
@@ -75,6 +73,7 @@ pub fn voronoy_tree(points: &Vec<Point>) -> (Vec<usize>, Vec<Vec<Polygon>>) {
                 }
                 excluded.push(*i);
                 orders[kept_all[*i]] = k;
+                lods[kept_all[*i]] = lod;
                 k+=1;
             }
         }
@@ -85,13 +84,17 @@ pub fn voronoy_tree(points: &Vec<Point>) -> (Vec<usize>, Vec<Vec<Polygon>>) {
             sites.remove(excluded[i] - i);
         }
 
+        lod += 1;
+
         if sites.len() < 3 {
             for ex in excluded.iter() {
                 areas.retain(|(i, _) | i != ex)
             }
             for (i, _) in areas.iter() {
                 orders[kept_all[*i]] = k;
+                lods[kept_all[*i]] = lod;
                 k+=1;
+                lod += 1;
             }
             break;
         } else {
@@ -99,9 +102,8 @@ pub fn voronoy_tree(points: &Vec<Point>) -> (Vec<usize>, Vec<Vec<Polygon>>) {
                 kept_all.remove(excluded[i] - i);
             }
         }
-
     }
 
-    return (orders, cells_all);
+    return (orders, lods);
 }
 
