@@ -18,22 +18,17 @@ fn main() {
         pts.push(Point::new(*x, *y));
     }
 
-    let (orders, lods) = eckert::voronoy_tree(&pts);
+    let wts: Vec<f64> = rand::thread_rng().sample_iter(&range).take(n).collect(); // weights associated with points
+
+    let (orders, lods) = eckert::voronoy_tree(&pts, &wts);
     let n_1 = pts.len()-1;
     println!("DROP TABLE IF EXISTS pts;");
-    println!("CREATE TABLE public.pts(fid serial primary key, lod int, ord int, geom geometry);");
-    println!("INSERT INTO pts (lod, ord, geom) VALUES");
+    println!("CREATE TABLE public.pts(fid serial primary key, lod int, ord int, weight real, geom geometry);");
+    println!("INSERT INTO pts (lod, ord, weight, geom) VALUES");
     for i in 0..n_1 {
-        let wkt = pts[i].wkt_string();
-        let lod = lods[i];
-        let order = orders[i];
-        println!("({}, {}, '{}'::geometry),", lod, order, wkt);
+        println!("({}, {}, {}, '{}'::geometry),", lods[i], orders[i], wts[i], pts[i].wkt_string());
     }
-
-    let wkt = pts[n_1].wkt_string();
-    let lod = lods[n_1];
-    let order = orders[n_1];
-    println!("({}, {}, '{}'::geometry);", lod, order, wkt);
+    println!("({}, {}, {}, '{}'::geometry);", lods[n_1], orders[n_1], wts[n_1], pts[n_1].wkt_string());
 
     // SELECT st_collect(st_voronoipolygons(st_collect(geom)), st_collect(geom)) FROM public.pts
     // WHERE lod >= 10

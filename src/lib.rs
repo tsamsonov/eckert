@@ -13,7 +13,7 @@ fn cmp_f64(a: &f64, b: &f64) -> Ordering {
     return Ordering::Equal;
 }
 
-pub fn voronoy_tree(points: &Vec<Point>) -> (Vec<usize>, Vec<usize>) {
+pub fn voronoy_tree(points: &Vec<Point>, weights: &Vec<f64>) -> (Vec<usize>, Vec<usize>) {
 
     let mut sites: Vec<VoronoiPoint> = points
         .iter()
@@ -57,7 +57,7 @@ pub fn voronoy_tree(points: &Vec<Point>) -> (Vec<usize>, Vec<usize>) {
         let mut areas : Vec<(usize, f64)>  = cells
             .iter()
             .enumerate()
-            .map(|(i, elem)| (i, elem.unsigned_area()))
+            .map(|(i, elem)| (i, elem.unsigned_area() * weights[kept_all[i]]))
             .collect();
         areas.sort_by(|a, b| cmp_f64(&a.1, &b.1));
 
